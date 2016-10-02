@@ -18,10 +18,12 @@ REQUIREMENTS = ['pushetta==1.0.15']
 
 
 CONF_CHANNEL_NAME = 'channel_name'
+CONF_SEND_TEST_MSG = 'send_test_msg'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_API_KEY): cv.string,
     vol.Required(CONF_CHANNEL_NAME): cv.string,
+    vol.Optional(CONF_SEND_TEST_MSG, default=True): cv.boolean,
 })
 
 
@@ -29,16 +31,17 @@ def get_service(hass, config):
     """Get the Pushetta notification service."""
     from pushetta import Pushetta, exceptions
 
-    try:
-        pushetta = Pushetta(config[CONF_API_KEY])
-        pushetta.pushMessage(config[CONF_CHANNEL_NAME],
-                             "Home Assistant started")
-    except exceptions.TokenValidationError:
-        _LOGGER.error("Please check your access token")
-        return None
-    except exceptions.ChannelNotFoundError:
-        _LOGGER.error("Channel '%s' not found", config[CONF_CHANNEL_NAME])
-        return None
+    if config[CONF_SEND_TEST_MSG]:
+        try:
+            pushetta = Pushetta(config[CONF_API_KEY])
+            pushetta.pushMessage(config[CONF_CHANNEL_NAME],
+                                 "Home Assistant started")
+        except exceptions.TokenValidationError:
+            _LOGGER.error("Please check your access token")
+            return None
+        except exceptions.ChannelNotFoundError:
+            _LOGGER.error("Channel '%s' not found", config[CONF_CHANNEL_NAME])
+            return None
 
     return PushettaNotificationService(config[CONF_API_KEY],
                                        config[CONF_CHANNEL_NAME])
